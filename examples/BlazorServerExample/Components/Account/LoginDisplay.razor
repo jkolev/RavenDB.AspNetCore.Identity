@@ -1,0 +1,16 @@
+@using BlazorServerExample.Models
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<AuthorizeView>
+    <Authorized>
+        <span class="navbar-text me-2">
+            Hello, @context.User.Identity?.Name!
+        </span>
+        <a href="/Account/Logout" class="btn btn-outline-secondary">Logout</a>
+    </Authorized>
+    <NotAuthorized>
+        <a href="/Account/Login" class="btn btn-outline-primary me-2">Login</a>
+        <a href="/Account/Register" class="btn btn-primary">Register</a>
+    </NotAuthorized>
+</AuthorizeView>

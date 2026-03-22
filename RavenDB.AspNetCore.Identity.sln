@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RavenDB.AspNetCore.Identity", "src\ RavenDB.AspNetCore.Identity\RavenDB.AspNetCore.Identity.csproj", "{323193FF-5877-42CB-AB9A-5075512D8D66}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorServerExample", "examples\BlazorServerExample\BlazorServerExample.csproj", "{0E21DEA9-D4F3-4350-A888-3104433215C3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{323193FF-5877-42CB-AB9A-5075512D8D66}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{323193FF-5877-42CB-AB9A-5075512D8D66}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{323193FF-5877-42CB-AB9A-5075512D8D66}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{323193FF-5877-42CB-AB9A-5075512D8D66}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0E21DEA9-D4F3-4350-A888-3104433215C3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0E21DEA9-D4F3-4350-A888-3104433215C3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0E21DEA9-D4F3-4350-A888-3104433215C3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0E21DEA9-D4F3-4350-A888-3104433215C3}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
