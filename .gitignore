@@ -78,3 +78,6 @@ appsettings.Development.jsonExamples.BlazorServer/
 *.pfx
 *.p12
 *.pem
+
+# Git worktrees
+.worktrees/
