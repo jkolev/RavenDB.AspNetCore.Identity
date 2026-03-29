@@ -102,8 +102,8 @@ public abstract class RavenDbTestBase : RavenTestDriver
     // CRITICAL: Use [CallerMemberName] for unique database per test to prevent cross-test pollution
     protected IDocumentStore GetTestDocumentStore([CallerMemberName] string? database = null)
     {
-        // RavenTestDriver.GetDocumentStore() returns an already-initialized store
-        return GetDocumentStore(database);
+        // RavenTestDriver.GetDocumentStore() accepts optional database name string
+        return base.GetDocumentStore(database: database);
     }
 
     protected RavenUserStore<TUser> CreateUserStore<TUser>(
@@ -162,8 +162,8 @@ public abstract class RavenDbTestBase : RavenTestDriver
 1. **RavenRoleStore not tested** - stub implementation, all methods throw NotImplementedException
 2. **IUserRoleStore not tested** - returns empty/false, awaiting RavenRoleStore implementation
 3. **Static indexes not tested** - UseStaticIndexes=false in tests (dynamic queries only)
-4. **ID generation conventions not tested** - configured directly on DocumentStore.Conventions by users, not part of RavenDbIdentityOptions
-5. **AutoSaveChanges not implemented** - RavenDbIdentityOptions defines this property but RavenUserStore always calls SaveChangesAsync. Tests verify current behavior (always saves).
+4. **ID generation conventions not tested** - ID generation is handled by RavenDB's native conventions system (DocumentStore.Conventions), not by this library. Users configure conventions directly on their DocumentStore before initialization.
+5. **AutoSaveChanges not implemented** - RavenDbIdentityOptions defines this property but RavenUserStore does not check it and always calls SaveChangesAsync. Tests verify current behavior (always saves).
 
 ## Implementation Tasks
 
@@ -174,15 +174,15 @@ public abstract class RavenDbTestBase : RavenTestDriver
 
 **Actions**:
 1. Create test project with PackageReferences:
-   - RavenDB.TestDriver (7.2.0+) - MUST match RavenDB.Client major version
-   - xUnit (2.9.0+)
-   - xUnit.runner.visualstudio (2.8.0+)
+   - RavenDB.TestDriver (7.2.1) - MUST match RavenDB.Client version exactly
+   - xunit (2.9.0+)
+   - xunit.runner.visualstudio (2.8.0+)
    - FluentAssertions (7.0.0+)
    - Moq (4.20.0+)
    - Microsoft.NET.Test.Sdk (17.11.0+)
 2. Add project reference to main library
 3. Implement RavenDbTestBase with:
-   - GetTestDocumentStore helper (uses [CallerMemberName] for unique database names; RavenTestDriver.GetDocumentStore() already returns initialized store)
+   - GetTestDocumentStore helper using [CallerMemberName] - calls GetDocumentStore() from RavenTestDriver base class
    - CreateUserStore helper (accepts session parameter)
    - GetEmailReservationAsync helper (verifies compare/exchange state)
    - DeleteEmailReservationAsync helper (cleanup if needed)
@@ -319,10 +319,13 @@ public abstract class RavenDbTestBase : RavenTestDriver
 
 **Note**: These are unit tests verifying service registration. They should:
 - Create a ServiceCollection
-- Call AddIdentity<TestUser, TestRole>().AddRavenDbIdentityStores(...)
+- Call AddIdentity<TestUser, TestRole>().AddRavenDbIdentityStores(...) with Action<RavenDbIdentityOptions> callback
 - Verify services are registered (ServiceDescriptor checks)
+- Verify options are configured by resolving IOptions<RavenDbIdentityOptions>
 - NOT require actual RavenDB instances
 - NOT inherit from RavenDbTestBase
+
+**Implementation Note**: The AddRavenDbIdentityStores extension method accepts only an optional Action<RavenDbIdentityOptions> parameter. It does NOT accept an IDocumentStore parameter. ID generation is configured separately on DocumentStore.Conventions by users.
 
 ### Task 12: Update Solution & Documentation
 **Actions**:
