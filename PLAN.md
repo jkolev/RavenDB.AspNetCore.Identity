@@ -102,9 +102,8 @@ public abstract class RavenDbTestBase : RavenTestDriver
     // CRITICAL: Use [CallerMemberName] for unique database per test to prevent cross-test pollution
     protected IDocumentStore GetTestDocumentStore([CallerMemberName] string? database = null)
     {
-        var store = GetDocumentStore(database);
-        store.Initialize(); // Initialize before using
-        return store;
+        // RavenTestDriver.GetDocumentStore() returns an already-initialized store
+        return GetDocumentStore(database);
     }
 
     protected RavenUserStore<TUser> CreateUserStore<TUser>(
@@ -178,7 +177,7 @@ public abstract class RavenDbTestBase : RavenTestDriver
    - Microsoft.NET.Test.Sdk (17.11.0+)
 2. Add project reference to main library
 3. Implement RavenDbTestBase with:
-   - GetTestDocumentStore helper (uses [CallerMemberName] for unique database names)
+   - GetTestDocumentStore helper (uses [CallerMemberName] for unique database names; RavenTestDriver.GetDocumentStore() already returns initialized store)
    - CreateUserStore helper (accepts session parameter)
    - GetEmailReservationAsync helper (verifies compare/exchange state)
    - DeleteEmailReservationAsync helper (cleanup if needed)
@@ -331,7 +330,7 @@ Task 10 depends on all previous tasks completing.
 3. Critical compare/exchange email uniqueness scenarios covered
 4. Session lifecycle edge cases tested
 5. No flaky tests (all tests deterministic, unique database per test via [CallerMemberName])
-6. Tests run in <30 seconds total
+6. Tests run in reasonable time (target <2 minutes for full suite - TestDriver spins up embedded RavenDB instances)
 7. Clear test names following convention
 
 ## Out of Scope
