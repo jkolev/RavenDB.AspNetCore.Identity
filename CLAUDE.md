@@ -121,7 +121,7 @@ See `RavenDbIdentityOptions.cs` for implementation details.
 ## Known Issues and Incomplete Features
 
 1. **Role Management**: RavenRoleStore is completely unimplemented - all methods throw NotImplementedException
-2. **User Roles**: IUserRoleStore methods in RavenUserStore are not implemented (AddToRoleAsync, RemoveFromRoleAsync, GetRolesAsync, IsInRoleAsync, GetUsersInRoleAsync)
+2. **User Roles**: IUserRoleStore methods in RavenUserStore are stub implementations that return empty values or Task.CompletedTask (AddToRoleAsync, RemoveFromRoleAsync, GetRolesAsync, IsInRoleAsync, GetUsersInRoleAsync)
 3. **RavenIdentityRole**: Empty class placeholder (Models/RavenIdentityRole.cs)
 
 ## Key Conventions
@@ -226,7 +226,8 @@ src/RavenDB.AspNetCore.Identity/
 
 tests/RavenDB.AspNetCore.Identity.Tests/
 ├── Infrastructure/
-│   └── RavenDbTestBase.cs              # Base test class with TestDriver configuration
+│   ├── RavenDbTestBase.cs              # Base test class with TestDriver configuration
+│   └── ConventionsTests.cs             # Conventions helper class tests
 ├── Stores/
 │   ├── RavenUserStoreTests.cs          # Core CRUD operations tests
 │   ├── RavenUserStoreEmailTests.cs     # Email uniqueness & compare/exchange tests
@@ -235,7 +236,8 @@ tests/RavenDB.AspNetCore.Identity.Tests/
 │   ├── RavenUserStoreLoginTests.cs     # External login provider tests
 │   ├── RavenUserStoreSecurityTests.cs  # Security stamp tests
 │   ├── RavenUserStorePhoneTests.cs     # Phone number tests
-│   └── RavenUserStoreSessionTests.cs   # Session lifecycle tests
+│   ├── RavenUserStoreSessionTests.cs   # Session lifecycle tests
+│   └── RavenUserStoreRoleTests.cs      # Role operations tests (stub implementations)
 ├── ValueObjects/
 │   └── NormalizedEmailTests.cs         # NormalizedEmail value object tests
 ├── Models/
@@ -251,14 +253,17 @@ The test suite uses RavenDB.TestDriver 7.2.1 with xUnit for comprehensive integr
 - **Email Uniqueness**: Compare/exchange operations, concurrent registration, email migration
 - **CRUD Operations**: Create, read, update, delete with proper session handling
 - **ASP.NET Core Identity Interfaces**: All implemented store interfaces
+- **Conventions**: Email reservation keys, collection names, role ID generation
+- **Role Operations**: Stub implementations of IUserRoleStore methods
 - **Edge Cases**: Disposed stores, session lifecycle, null handling
 
-**Test Statistics**: 96 passing, 3 skipped (requiring static indexes), 99 total
+**Test Statistics**: 116 passing, 3 skipped (requiring static indexes), 119 total
 
 **Known Test Limitations**:
 - `FindByLoginAsync` tests are skipped - requires static index for multi-field Any() queries
 - Session disposal tests reflect RavenDB's actual behavior (allows LoadAsync on disposed sessions)
 - Tests use `ThrowOnInvalidOrMissingLicense = false` for RavenDB TestDriver
+- Role operations tests verify stub behavior only - full role management pending RavenRoleStore implementation
 
 ## Important Notes
 
