@@ -23,6 +23,18 @@ dotnet clean
 
 # Restore packages
 dotnet restore
+
+# Run all tests
+dotnet test
+
+# Run tests with detailed output
+dotnet test --verbosity normal
+
+# Run specific test class
+dotnet test --filter "FullyQualifiedName~RavenUserStoreEmailTests"
+
+# Run tests with coverage (if coverlet installed)
+dotnet test --collect:"XPlat Code Coverage"
 ```
 
 ## Architecture
@@ -211,7 +223,42 @@ src/RavenDB.AspNetCore.Identity/
 │   └── RavenRoleStore.cs               # Generic role store RavenRoleStore<TRole> (stub)
 └── ValueObjects/
     └── NormalizedEmail.cs              # Email normalization value object
+
+tests/RavenDB.AspNetCore.Identity.Tests/
+├── Infrastructure/
+│   └── RavenDbTestBase.cs              # Base test class with TestDriver configuration
+├── Stores/
+│   ├── RavenUserStoreTests.cs          # Core CRUD operations tests
+│   ├── RavenUserStoreEmailTests.cs     # Email uniqueness & compare/exchange tests
+│   ├── RavenUserStorePasswordTests.cs  # Password operations tests
+│   ├── RavenUserStoreLockoutTests.cs   # Lockout functionality tests
+│   ├── RavenUserStoreLoginTests.cs     # External login provider tests
+│   ├── RavenUserStoreSecurityTests.cs  # Security stamp tests
+│   ├── RavenUserStorePhoneTests.cs     # Phone number tests
+│   └── RavenUserStoreSessionTests.cs   # Session lifecycle tests
+├── ValueObjects/
+│   └── NormalizedEmailTests.cs         # NormalizedEmail value object tests
+├── Models/
+│   └── RavenIdentityUserTests.cs       # RavenIdentityUser model tests
+└── Extensions/
+    └── IdentityBuilderExtensionsTests.cs # DI registration tests
 ```
+
+## Testing
+
+The test suite uses RavenDB.TestDriver 7.2.1 with xUnit for comprehensive integration testing. Tests cover:
+
+- **Email Uniqueness**: Compare/exchange operations, concurrent registration, email migration
+- **CRUD Operations**: Create, read, update, delete with proper session handling
+- **ASP.NET Core Identity Interfaces**: All implemented store interfaces
+- **Edge Cases**: Disposed stores, session lifecycle, null handling
+
+**Test Statistics**: 96 passing, 3 skipped (requiring static indexes), 99 total
+
+**Known Test Limitations**:
+- `FindByLoginAsync` tests are skipped - requires static index for multi-field Any() queries
+- Session disposal tests reflect RavenDB's actual behavior (allows LoadAsync on disposed sessions)
+- Tests use `ThrowOnInvalidOrMissingLicense = false` for RavenDB TestDriver
 
 ## Important Notes
 
