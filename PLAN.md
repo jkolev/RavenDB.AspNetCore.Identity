@@ -1,7 +1,7 @@
 # Implementation Plan: RavenDB.AspNetCore.Identity Test Suite
 
 ## Plan Verdict
-REVISED
+READY
 
 ## Objective
 Add comprehensive test coverage for RavenDB.AspNetCore.Identity using RavenDB.TestDriver with xUnit.
@@ -137,7 +137,12 @@ public abstract class RavenDbTestBase : RavenTestDriver
         }
     }
 
-    protected class TestUser : RavenIdentityUser { }
+    // Concrete test user class (RavenIdentityUser is abstract)
+    protected class TestUser : RavenIdentityUser
+    {
+        // Parameterless constructor required for generic constraint
+        public TestUser() { }
+    }
 }
 ```
 
@@ -181,7 +186,7 @@ public abstract class RavenDbTestBase : RavenTestDriver
    - CreateUserStore helper (accepts session parameter)
    - GetEmailReservationAsync helper (verifies compare/exchange state)
    - DeleteEmailReservationAsync helper (cleanup if needed)
-   - TestUser class extending RavenIdentityUser
+   - TestUser concrete class extending RavenIdentityUser (abstract base requires concrete implementation)
 
 ### Task 2: Test Email Uniqueness & Compare/Exchange
 **File**: `tests/RavenDB.AspNetCore.Identity.Tests/Stores/RavenUserStoreEmailTests.cs`
@@ -190,12 +195,15 @@ public abstract class RavenDbTestBase : RavenTestDriver
 1. `CreateAsync_WithUniqueEmail_CreatesReservation`
 2. `CreateAsync_WithDuplicateEmail_ReturnsFailed`
 3. `CreateAsync_WithStoreFailure_RollsBackReservation`
-4. `UpdateAsync_WithEmailChange_MigratesReservation`
-5. `UpdateAsync_WithCaseOnlyChange_DoesNotMigrateReservation`
-6. `UpdateAsync_WithDuplicateEmail_ReturnsFailedAndKeepsOldEmail`
-7. `DeleteAsync_RemovesEmailReservation`
-8. `FindByEmailAsync_BypassesIndexes_UsesCompareExchange`
-9. `FindByEmailAsync_WithNonexistentEmail_ReturnsNull`
+4. `CreateAsync_ConcurrentDuplicateEmails_OnlyOneSucceeds` (test race condition with compare/exchange)
+5. `UpdateAsync_WithEmailChange_MigratesReservation`
+6. `UpdateAsync_WithCaseOnlyChange_DoesNotMigrateReservation`
+7. `UpdateAsync_WithDuplicateEmail_ReturnsFailedAndKeepsOldEmail`
+8. `DeleteAsync_RemovesEmailReservation`
+9. `FindByEmailAsync_BypassesIndexes_UsesCompareExchange`
+10. `FindByEmailAsync_WithNonexistentEmail_ReturnsNull`
+11. `SetEmailConfirmedAsync_SetsFlag`
+12. `GetEmailConfirmedAsync_ReturnsFlag`
 
 **Validation**: Each test verifies compare/exchange state using `GetCompareExchangeValueOperation`
 
@@ -214,8 +222,10 @@ public abstract class RavenDbTestBase : RavenTestDriver
 9. `FindByNameAsync_WithExistingUser_ReturnsUser`
 10. `FindByNameAsync_WithNonexistentName_ReturnsNull`
 11. `GetUserIdAsync_WithNullId_ThrowsInvalidOperationException`
-12. `Dispose_SetsDisposedFlag`
-13. `CreateAsync_AfterDispose_ThrowsObjectDisposedException`
+12. `SetNormalizedUserNameAsync_NormalizesToLowercase` (verify username normalization)
+13. `GetNormalizedUserNameAsync_ReturnsUserName` (verify normalized username retrieval)
+14. `Dispose_SetsDisposedFlag`
+15. `CreateAsync_AfterDispose_ThrowsObjectDisposedException`
 
 **Note**: RavenUserStore currently always calls SaveChangesAsync (AutoSaveChanges option is defined but not implemented in the store).
 
@@ -250,13 +260,14 @@ public abstract class RavenDbTestBase : RavenTestDriver
 4. `FindByLoginAsync_WithExistingLogin_ReturnsUser`
 5. `FindByLoginAsync_WithNonexistentLogin_ReturnsNull`
 
-### Task 7: Test Security & Phone Operations
+### Task 7: Test Security Operations
 **File**: `tests/RavenDB.AspNetCore.Identity.Tests/Stores/RavenUserStoreSecurityTests.cs`
 
 **Test Cases**:
 1. `SetSecurityStampAsync_SetsStamp`
 2. `GetSecurityStampAsync_ReturnsStamp`
 
+### Task 8: Test Phone Operations
 **File**: `tests/RavenDB.AspNetCore.Identity.Tests/Stores/RavenUserStorePhoneTests.cs`
 
 **Test Cases**:
@@ -265,7 +276,7 @@ public abstract class RavenDbTestBase : RavenTestDriver
 3. `SetPhoneNumberConfirmedAsync_SetsFlag`
 4. `GetPhoneNumberConfirmedAsync_ReturnsFlag`
 
-### Task 7b: Test Session Lifecycle Management
+### Task 9: Test Session Lifecycle Management
 **File**: `tests/RavenDB.AspNetCore.Identity.Tests/Stores/RavenUserStoreSessionTests.cs`
 
 **Test Cases**:
@@ -276,7 +287,7 @@ public abstract class RavenDbTestBase : RavenTestDriver
 
 **Note**: These tests verify proper session interaction patterns that are critical for RavenDB usage.
 
-### Task 8: Test Value Objects & Models
+### Task 10: Test Value Objects & Models
 **File**: `tests/RavenDB.AspNetCore.Identity.Tests/ValueObjects/NormalizedEmailTests.cs`
 
 **Test Cases**:
@@ -293,8 +304,9 @@ public abstract class RavenDbTestBase : RavenTestDriver
 **Test Cases**:
 1. `EmailSetter_NormalizesToLowercase`
 2. `EmailSetter_WithMixedCase_StoresLowercase`
+3. `EmailSetter_WithWhitespace_TrimsAndNormalizes`
 
-### Task 9: Test DI Registration
+### Task 11: Test DI Registration
 **File**: `tests/RavenDB.AspNetCore.Identity.Tests/Extensions/IdentityBuilderExtensionsTests.cs`
 
 **Test Cases (Unit tests, no RavenDB required)**:
@@ -312,17 +324,17 @@ public abstract class RavenDbTestBase : RavenTestDriver
 - NOT require actual RavenDB instances
 - NOT inherit from RavenDbTestBase
 
-### Task 10: Update Solution & Documentation
+### Task 12: Update Solution & Documentation
 **Actions**:
 1. Add test project to `RavenDB.AspNetCore.Identity.sln`
 2. Update `CLAUDE.md` with test execution commands and structure
 3. Create `.github/workflows/tests.yml` for CI (optional, out of scope if no .github exists)
 
 ## Execution Order
-Tasks must be executed sequentially: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 7b → 8 → 9 → 10
+Tasks must be executed sequentially: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11 → 12
 
-Tasks 2-9 depend on Task 1 (test infrastructure).
-Task 10 depends on all previous tasks completing.
+Tasks 2-11 depend on Task 1 (test infrastructure).
+Task 12 depends on all previous tasks completing.
 
 ## Success Criteria
 1. All tests pass with `dotnet test`
